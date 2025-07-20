@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package quru.qa.petproject.countries.grpc;
+
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = true;
+option java_package = "quru.qa.petproject.countries.grpc";
+option java_outer_classname = "CountriesProto";
+
+service CountriesService {
+  rpc GetAll (google.protobuf.Empty) returns (stream CountriesResponse) {}
+  rpc Add (AddCountryRequest) returns (CountryResponse) {}
+  rpc UpdateName (stream CountryRequest) returns (AddedCountries) {}
+}
+
+message AddedCountries  {
+  int32 amount = 1;
+}
+
+message AddCountryRequest {
+  string name = 1;
+  string code = 2;
+}
+
+message CountryRequest {
+  string id = 1;
+  string name = 2;
+  string code = 3;
+}
+
+message CountryResponse {
+  string id = 1;
+  string name = 2;
+  string code = 3;
+}
+
+message CountriesResponse {
+  repeated CountryResponse countries = 1;
+}
