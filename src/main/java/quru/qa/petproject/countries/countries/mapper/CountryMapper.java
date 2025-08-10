@@ -20,19 +20,24 @@ public interface CountryMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntityFromDto(Country dto, @MappingTarget CountryEntity entity);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateEntityFromDto(CountryRequest dto, @MappingTarget CountryEntity entity);
+
     @Mapping(target = "id", ignore = true)
-    Country toCountry(AddCountryRequest request);
+    CountryEntity toCountry(AddCountryRequest request);
 
-    Country toCountry(CountryRequest request);
+    CountryResponse toProtoResponse(CountryEntity country);
 
-    CountryResponse toProtoResponse(Country country);
+    List<CountryResponse> toProtoResponseList(List<CountryEntity> countries);
 
-    List<CountryResponse> toProtoResponseList(List<Country> countries);
-
-    default CountriesResponse toProtoResponse(List<Country> countries) {
+    default CountriesResponse toProtoResponse(List<CountryEntity> countries) {
         List<CountryResponse> responses = toProtoResponseList(countries);
         return CountriesResponse.newBuilder()
             .addAllCountries(responses)
             .build();
     }
+
+    guru.qa.countries.xml.Country toXml(Country dto);
+
+    Country toDto(guru.qa.countries.xml.Country xml);
 }

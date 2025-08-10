@@ -8,5 +8,7 @@ import java.util.UUID;
 
 public interface CountryRepository extends JpaRepository<CountryEntity, UUID> {
 
-    Optional<CountryEntity> findByCode(String code);
+    default Optional<CountryEntity> findById(String id) {
+        return findById(UUID.fromString(id));
+    }
 }
