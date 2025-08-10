@@ -1,9 +1,8 @@
 package quru.qa.petproject.countries.countries.service.impl;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import quru.qa.petproject.countries.countries.db.entity.CountryEntity;
 import quru.qa.petproject.countries.countries.db.repository.CountryRepository;
 import quru.qa.petproject.countries.countries.dto.Country;
@@ -36,9 +35,7 @@ public class CountryServiceImpl implements CountryService {
     @Override
     public Country updateName(Country country) {
         CountryEntity entity = repository.findById(country.id())
-            .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Country not found with id: " + country.id())
-            );
+            .orElseThrow(() -> new EntityNotFoundException("Country not found with id: " + country.id()));
 
         mapper.updateEntityFromDto(country, entity);
 
