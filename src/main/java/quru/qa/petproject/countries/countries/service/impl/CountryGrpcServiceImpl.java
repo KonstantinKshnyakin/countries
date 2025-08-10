@@ -4,10 +4,12 @@ import com.google.common.collect.Lists;
 import com.google.protobuf.Empty;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import quru.qa.petproject.countries.countries.dto.Country;
+import quru.qa.petproject.countries.countries.db.entity.CountryEntity;
+import quru.qa.petproject.countries.countries.db.repository.CountryRepository;
 import quru.qa.petproject.countries.countries.mapper.CountryMapper;
 import quru.qa.petproject.countries.countries.service.CountryService;
 import quru.qa.petproject.countries.countries.util.ThrowingRunnable;
@@ -21,6 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CountryGrpcServiceImpl extends CountriesServiceGrpc.CountriesServiceImplBase {
 
     private final CountryService countryService;
+    private final CountryRepository countryRepository;
+
     private final CountryMapper mapper;
     @Value("${app.grpc-countries-batch-size:5}")
     private Integer batchSize;
@@ -28,7 +32,7 @@ public class CountryGrpcServiceImpl extends CountriesServiceGrpc.CountriesServic
     @Override
     public void add(AddCountryRequest request, StreamObserver<CountryResponse> responseObserver) {
         processWithCompleted(responseObserver, () -> {
-            Country country = countryService.add(mapper.toCountry(request));
+            CountryEntity country = countryRepository.save(mapper.toCountry(request));
             responseObserver.onNext(mapper.toProtoResponse(country));
         });
     }
@@ -36,7 +40,7 @@ public class CountryGrpcServiceImpl extends CountriesServiceGrpc.CountriesServic
     @Override
     public void getAll(Empty request, StreamObserver<CountriesResponse> responseObserver) {
         processWithCompleted(responseObserver, () -> {
-            List<Country> countries = countryService.getAll();
+            List<CountryEntity> countries = countryRepository.findAll();
             Lists.partition(countries, batchSize).stream()
                 .map(mapper::toProtoResponse)
                 .forEach(responseObserver::onNext);
@@ -51,7 +55,12 @@ public class CountryGrpcServiceImpl extends CountriesServiceGrpc.CountriesServic
             @Override
             public void onNext(CountryRequest country) {
                 process(responseObserver, () -> {
-                    countryService.updateName(mapper.toCountry(country));
+                    CountryEntity entity = countryRepository.findById(country.getId())
+                        .orElseThrow(() -> new EntityNotFoundException("Country not found with id: " + country.getId()));
+
+                    mapper.updateEntityFromDto(country, entity);
+                    countryRepository.save(entity);
+
                     amount.incrementAndGet();
                 });
             }
